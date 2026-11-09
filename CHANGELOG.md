@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2
+
+- The package is now published as `@wiro-ai/wiro-llm`, the same name as this repository. It replaces `@wiro-ai/ai-sdk-provider`: install the new name and update your imports. No code changes.
+
 ## 0.1.1
 
 - Published from GitHub Actions through npm trusted publishing, with provenance. No code changes.

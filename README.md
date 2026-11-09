@@ -6,7 +6,7 @@
 
 Use the models on the Wiro LLM gateway from the Vercel AI SDK, with streaming, tool calls and structured output, and see what each call cost.
 
-[![npm](https://img.shields.io/npm/v/@wiro-ai/ai-sdk-provider?style=for-the-badge&color=111111)](https://www.npmjs.com/package/@wiro-ai/ai-sdk-provider) [![AI SDK 7](https://img.shields.io/badge/AI%20SDK-7-111111?style=for-the-badge&color=111111)](https://ai-sdk.dev) [![Node.js 22+](https://img.shields.io/badge/Node.js-22%2B-111111?style=for-the-badge&color=111111)](#install) [![License: MIT](https://img.shields.io/badge/license-MIT-111111?style=for-the-badge&color=111111)](./LICENSE)
+[![npm](https://img.shields.io/npm/v/@wiro-ai/wiro-llm?style=for-the-badge&color=111111)](https://www.npmjs.com/package/@wiro-ai/wiro-llm) [![AI SDK 7](https://img.shields.io/badge/AI%20SDK-7-111111?style=for-the-badge&color=111111)](https://ai-sdk.dev) [![Node.js 22+](https://img.shields.io/badge/Node.js-22%2B-111111?style=for-the-badge&color=111111)](#install) [![License: MIT](https://img.shields.io/badge/license-MIT-111111?style=for-the-badge&color=111111)](./LICENSE)
 
 [Website](https://wiro.ai) · [LLM gateway](https://wiro.ai/llm) · [Models](https://wiro.ai/models?categories=llm-tool-call) · [Docs](https://wiro.ai/docs/completions-api#llm-setup-ai-sdk) · [Dashboard](https://wiro.ai/panel)
 
@@ -14,12 +14,12 @@ Use the models on the Wiro LLM gateway from the Vercel AI SDK, with streaming, t
 
 The [Wiro LLM gateway](https://wiro.ai/llm) serves language models from OpenAI, Anthropic, Google, xAI, DeepSeek, Qwen and others through one OpenAI-compatible endpoint, `https://llm.wiro.ai/v1`, with one Wiro project key. Every response includes what the call cost, and calls are paid from your Wiro wallet.
 
-`@wiro-ai/ai-sdk-provider` brings the gateway into the [AI SDK](https://ai-sdk.dev). It is built on `@ai-sdk/openai-compatible` and sets it up for Wiro: the key comes from `WIRO_API_KEY`, streamed calls report token usage, `Output.object` sends a JSON schema, and the cost of each call lands in `providerMetadata.wiro.cost`.
+`@wiro-ai/wiro-llm` brings the gateway into the [AI SDK](https://ai-sdk.dev). It is built on `@ai-sdk/openai-compatible` and sets it up for Wiro: the key comes from `WIRO_API_KEY`, streamed calls report token usage, `Output.object` sends a JSON schema, and the cost of each call lands in `providerMetadata.wiro.cost`.
 
 ## Install
 
 ```bash
-npm install @wiro-ai/ai-sdk-provider ai zod
+npm install @wiro-ai/wiro-llm ai zod
 ```
 
 The package needs Node.js 22 or later, the same as AI SDK 7. `zod` is used for tool inputs and structured output.
@@ -33,7 +33,7 @@ export WIRO_API_KEY=your-api-key
 ## Quick start
 
 ```js
-import { wiro } from '@wiro-ai/ai-sdk-provider';
+import { wiro } from '@wiro-ai/wiro-llm';
 import { generateText } from 'ai';
 
 const { text } = await generateText({
@@ -51,7 +51,7 @@ console.log(text);
 `createWiro()` makes a provider with your own settings. The default `wiro` instance is `createWiro()` with no options.
 
 ```js
-import { createWiro } from '@wiro-ai/ai-sdk-provider';
+import { createWiro } from '@wiro-ai/wiro-llm';
 
 const wiro = createWiro({
   apiKey: process.env.MY_WIRO_KEY,
