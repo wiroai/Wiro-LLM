@@ -44,7 +44,7 @@ const { text } = await generateText({
 console.log(text);
 ```
 
-`wiro(modelId)`, `wiro.chatModel(modelId)` and `wiro.languageModel(modelId)` return the same chat model. On reasoning models, `maxOutputTokens` covers the reasoning as well as the answer, so leave room if you set it (512 or more).
+`wiro(modelId)`, `wiro.chatModel(modelId)` and `wiro.languageModel(modelId)` return the same chat model. On reasoning models, `maxOutputTokens` covers the reasoning as well as the answer, so leave room if you set it. If a reply comes back empty with `finishReason` `length`, raise it or lower the reasoning effort.
 
 ### Settings
 
@@ -213,6 +213,14 @@ Each file starts with the commands to install and run it. `npm install` in `exam
 - [AI SDK setup](https://wiro.ai/docs/completions-api#llm-setup-ai-sdk): the same setup with `@ai-sdk/openai-compatible`
 - [AI SDK documentation](https://ai-sdk.dev/docs/introduction): `generateText`, `streamText`, tools and structured output
 
+## Agent skill
+
+This repository includes an agent skill, `wiro-llm`, in [`skills/wiro-llm/SKILL.md`](./skills/wiro-llm/SKILL.md). It shows coding agents such as Claude Code and Cursor how to call the Wiro LLM gateway: pick a model, use it from the OpenAI, Anthropic or AI SDK clients, and read what each call cost. Add it to your agent with:
+
+```bash
+npx skills add wiroai/Wiro-LLM --skill wiro-llm
+```
+
 ## Development
 
 ```bash
@@ -240,6 +248,9 @@ Email [support@wiro.ai](mailto:support@wiro.ai) or open an issue in this reposit
 | --- | --- |
 | [Wiro-Plugin](https://github.com/wiroai/Wiro-Plugin) | Wiro AI plugin for Cursor, Claude Code, Gemini CLI, Devin, Antigravity and Kiro |
 | [Wiro-MCP](https://github.com/wiroai/Wiro-MCP) | Official MCP server for Wiro AI, [`@wiro-ai/wiro-mcp` on npm](https://www.npmjs.com/package/@wiro-ai/wiro-mcp) |
+| [Wiro-Chromium-Extension](https://github.com/wiroai/Wiro-Chromium-Extension) | Wiro AI extension for Chrome, Edge, Opera and Brave |
+| [Wiro-Firefox-Extension](https://github.com/wiroai/Wiro-Firefox-Extension) | Wiro AI add-on for Firefox |
+| [Wiro-Safari-Extension](https://github.com/wiroai/Wiro-Safari-Extension) | Wiro AI extension for Safari on the Mac |
 | [Swift-QuickStart](https://github.com/wiroai/Swift-QuickStart) | WiroKit, the Wiro AI SDK for iOS |
 | [Kotlin-QuickStart](https://github.com/wiroai/Kotlin-QuickStart) | WiroKit, the Wiro AI SDK for Android |
 | [Dart-QuickStart](https://github.com/wiroai/Dart-QuickStart) | Wiro AI SDK for Dart and Flutter, [`wiro` on pub.dev](https://pub.dev/packages/wiro) |
