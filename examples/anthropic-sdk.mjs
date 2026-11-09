@@ -9,6 +9,7 @@ import Anthropic from '@anthropic-ai/sdk';
 
 const client = new Anthropic({
   apiKey: process.env.WIRO_API_KEY,
+  authToken: null, // send only the Wiro key, even if ANTHROPIC_AUTH_TOKEN is set
   baseURL: 'https://llm.wiro.ai',
 });
 
