@@ -1,6 +1,6 @@
 {
-  "name": "@wiro-ai/ai-sdk-provider",
-  "version": "0.1.1",
+  "name": "@wiro-ai/wiro-llm",
+  "version": "0.1.2",
   "description": "Wiro AI provider for the Vercel AI SDK. Run any model on the Wiro LLM gateway with generateText, streamText, tools and structured output, and read what each call cost.",
   "keywords": [
     "wiro",

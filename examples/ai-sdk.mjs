@@ -1,9 +1,9 @@
 // The Wiro provider for the AI SDK.
 //
-//   npm install @wiro-ai/ai-sdk-provider ai
+//   npm install @wiro-ai/wiro-llm ai
 //   WIRO_API_KEY=your-api-key node ai-sdk.mjs
 
-import { wiro } from '@wiro-ai/ai-sdk-provider';
+import { wiro } from '@wiro-ai/wiro-llm';
 import { generateText } from 'ai';
 
 const { text, usage, providerMetadata } = await generateText({
