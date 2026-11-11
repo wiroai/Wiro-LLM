@@ -2,7 +2,7 @@
 // adds /v1 to the base URL itself, so the base URL is the origin only. Any model
 // ID works here, including claude/sonnet-5 and the other Claude models.
 //
-//   npm install @anthropic-ai/sdk@0.137
+//   npm install @anthropic-ai/sdk
 //   WIRO_API_KEY=your-api-key node anthropic-sdk.mjs
 
 import Anthropic from '@anthropic-ai/sdk';

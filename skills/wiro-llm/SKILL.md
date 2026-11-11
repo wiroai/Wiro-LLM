@@ -91,7 +91,7 @@ console.log(response.output_text, response.usage?.cost);
 ## Anthropic Messages
 
 ```javascript
-import Anthropic from "@anthropic-ai/sdk"; // npm i @anthropic-ai/sdk@^0.137.0
+import Anthropic from "@anthropic-ai/sdk"; // npm i @anthropic-ai/sdk
 
 const anthropic = new Anthropic({
   baseURL: "https://llm.wiro.ai", // the origin: the SDK adds /v1
