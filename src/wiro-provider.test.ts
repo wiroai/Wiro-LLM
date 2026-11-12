@@ -374,9 +374,31 @@ describe('provider settings', () => {
     }
   });
 
-  it('throws NoSuchModelError for embedding and image models', () => {
+  it('throws NoSuchModelError for embedding models, which the gateway does not serve', () => {
     expect(() => wiro.embeddingModel('any')).toThrow(NoSuchModelError);
-    expect(() => wiro.imageModel('any')).toThrow(NoSuchModelError);
+  });
+
+  it('creates image, speech, transcription and video models on the Run API', () => {
+    const provider = createWiro({ apiKey: 'test-key' });
+
+    for (const [model, name] of [
+      [provider.image('pruna/p-image'), 'wiro.image'],
+      [provider.imageModel('pruna/p-image'), 'wiro.image'],
+      [provider.speech('elevenlabs/eleven-v4-turbo'), 'wiro.speech'],
+      [provider.speechModel('elevenlabs/eleven-v4-turbo'), 'wiro.speech'],
+      [provider.transcription('openai/whisper-large-v3'), 'wiro.transcription'],
+      [provider.transcriptionModel('openai/whisper-large-v3'), 'wiro.transcription'],
+      [provider.video('bytedance/seedance-v1-pro-fast'), 'wiro.video'],
+      [provider.videoModel('bytedance/seedance-v1-pro-fast'), 'wiro.video'],
+    ] as const) {
+      expect(model.provider).toBe(name);
+      expect(model.specificationVersion).toBe('v4');
+    }
+  });
+
+  it('refuses media model IDs that are not owner/model', () => {
+    expect(() => wiro.image('any')).toThrow(NoSuchModelError);
+    expect(() => wiro.speech('any')).toThrow(/owner\/model/);
   });
 
   it('cannot be called with new', () => {
