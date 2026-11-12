@@ -1,6 +1,6 @@
 {
   "name": "@wiro-ai/wiro-llm",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Wiro AI provider for the Vercel AI SDK: chat models on the Wiro LLM gateway, plus image, speech, transcription and video models, with the cost of every call.",
   "keywords": [
     "wiro",

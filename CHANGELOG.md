@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.2.0
+
+The provider now covers Wiro's image, speech, transcription and video models as well as chat.
+
+- `wiro.image(modelId)` for `generateImage`: text to image, and image editing from `prompt.images` and `prompt.mask`. `n`, `size`, `aspectRatio` and `seed` go to each model's own settings, whatever they are called, and a model with an image count setting makes several images in one task.
+- `wiro.speech(modelId)` for `generateSpeech`, with `voice`, `language`, `outputFormat`, `instructions` and `speed` matched to the model's own options.
+- `wiro.transcription(modelId)` for `transcribe`. A public audio URL goes straight to Wiro, and segment and word timings come back when the model writes them.
+- `wiro.video(modelId)` for `experimental_generateVideo`, `experimental_startVideo` and `experimental_getVideoStatus`, with start and end frames, references, `resolution`, `duration`, `fps`, `generateAudio` and webhooks.
+- Model settings in `providerOptions.wiro` go to the model as they are. Required settings left out get the model's catalog default.
+- Every result names its Wiro task and cost in `providerMetadata.wiro`.
+- `WiroTaskError` says why a task gave no result and which task it was.
+- Signature projects keep using `API_KEY:API_SECRET`: Run API requests are signed with the secret, which is never sent.
+- New settings: `runBaseURL` for the Run API and `poll` for how long image, speech and transcription calls wait.
+- `WiroImageModelId`, `WiroSpeechModelId`, `WiroTranscriptionModelId` and `WiroVideoModelId` list the catalog's models for autocomplete.
+
 ## 0.1.3
 
 - First release of `@wiro-ai/wiro-llm` from GitHub Actions through npm trusted publishing, with provenance. No code changes.
