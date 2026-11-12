@@ -7,7 +7,7 @@ description: Call LLMs through the Wiro LLM gateway at llm.wiro.ai with OpenAI- 
 
 The gateway serves language models from OpenAI, Anthropic, Google, xAI, DeepSeek, Qwen and others through OpenAI Chat Completions, OpenAI Responses and Anthropic Messages, with one Wiro project key.
 Calls are paid from your Wiro wallet, and each reply carries the billed amount.
-For images, video, audio, Wiro's task API or the Wiro MCP server, use the wiro-ai skill.
+For images, video and audio from the AI SDK, see the provider section below. For Wiro's task API in other languages or the Wiro MCP server, use the wiro-ai skill.
 To point a coding agent (Cursor, Claude Code, VS Code, Cline in Windsurf, OpenClaw or Hermes) at the gateway, follow the "Connect an agent" section of https://wiro.ai/docs/completions-api.
 
 ## Endpoints and credentials
@@ -163,8 +163,24 @@ const { output } = await generateText({
 console.log(output);
 ```
 
-- `createWiro({ apiKey, baseURL, headers, fetch })` builds a provider with other settings; `wiro` is `createWiro()` with the defaults.
+- `createWiro({ apiKey, baseURL, runBaseURL, poll, headers, fetch })` builds a provider with other settings; `wiro` is `createWiro()` with the defaults.
 - `providerOptions: { wiro: { reasoningEffort: "low" } }` sends `reasoning_effort`. Reasoning, when the model returns it, is in `reasoningText`.
+- The same provider runs Wiro's media models through the Run API (`https://api.wiro.ai/v1`), with the same key: `wiro.image(id)` with `generateImage` (text to image, and editing through `prompt.images`), `wiro.speech(id)` with `generateSpeech`, `wiro.transcription(id)` with `transcribe` and `wiro.video(id)` with `experimental_generateVideo`. Ids come from https://wiro.ai/models, such as `pruna/p-image`, `google/nano-banana`, `elevenlabs/eleven-v4-turbo`, `openai/whisper-large-v3` or `bytedance/seedance-v1-pro-fast`. The model's own settings go in `providerOptions.wiro`, and each result names its task and cost in `providerMetadata.wiro` (for images, in `images[i]`; for videos, in `videos[i]`). A task that gives no result throws `WiroTaskError` with `reason` and `taskId`.
+
+```javascript
+import { wiro } from "@wiro-ai/wiro-llm";
+import { generateImage, generateSpeech } from "ai";
+
+const { image, providerMetadata } = await generateImage({
+  model: wiro.image("pruna/p-image"),
+  prompt: "A red lighthouse at dusk",
+  aspectRatio: "16:9",
+});
+console.log(image.mediaType, providerMetadata.wiro.images[0]); // { taskId, cost, url, mediaType }
+
+const speech = await generateSpeech({ model: wiro.speech("wiro/kokoro-tts"), text: "Hello there.", voice: "nova" });
+console.log(speech.providerMetadata.wiro.cost);
+```
 
 ## Cost and money rules
 

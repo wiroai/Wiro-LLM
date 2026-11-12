@@ -4,17 +4,23 @@
 
 # Wiro AI provider for the AI SDK
 
-Use the models on the Wiro LLM gateway from the Vercel AI SDK, with streaming, tool calls and structured output, and see what each call cost.
+Use Wiro AI models from the Vercel AI SDK: chat on the Wiro LLM gateway, plus image, speech, transcription and video models, and see what each call cost.
 
 [![npm](https://img.shields.io/npm/v/@wiro-ai/wiro-llm?style=for-the-badge&color=111111)](https://www.npmjs.com/package/@wiro-ai/wiro-llm) [![AI SDK 7](https://img.shields.io/badge/AI%20SDK-7-111111?style=for-the-badge&color=111111)](https://ai-sdk.dev) [![Node.js 22+](https://img.shields.io/badge/Node.js-22%2B-111111?style=for-the-badge&color=111111)](#install) [![License: MIT](https://img.shields.io/badge/license-MIT-111111?style=for-the-badge&color=111111)](./LICENSE)
 
-[Website](https://wiro.ai) · [LLM gateway](https://wiro.ai/llm) · [Models](https://wiro.ai/models?categories=llm-tool-call) · [Docs](https://wiro.ai/docs/completions-api#llm-setup-ai-sdk) · [Dashboard](https://wiro.ai/panel)
+[Website](https://wiro.ai) · [LLM gateway](https://wiro.ai/llm) · [Models](https://wiro.ai/models) · [Docs](https://wiro.ai/docs) · [Dashboard](https://wiro.ai/panel)
 
 </div>
 
-The [Wiro LLM gateway](https://wiro.ai/llm) serves language models from OpenAI, Anthropic, Google, xAI, DeepSeek, Qwen and others through one OpenAI-compatible endpoint, `https://llm.wiro.ai/v1`, with one Wiro project key. Every response includes what the call cost, and calls are paid from your Wiro wallet.
+Wiro AI runs 1,000+ AI models behind one API and one project key. `@wiro-ai/wiro-llm` brings them into the [AI SDK](https://ai-sdk.dev):
 
-`@wiro-ai/wiro-llm` brings the gateway into the [AI SDK](https://ai-sdk.dev). It is built on `@ai-sdk/openai-compatible` and sets it up for Wiro: the key comes from `WIRO_API_KEY`, streamed calls report token usage, `Output.object` sends a JSON schema, and the cost of each call lands in `providerMetadata.wiro.cost`.
+- **Chat** on the [Wiro LLM gateway](https://wiro.ai/llm), with models from OpenAI, Anthropic, Google, xAI, DeepSeek, Qwen and others: `generateText` and `streamText` with tools, structured output and reasoning settings.
+- **Images** with `generateImage`: text to image, and image editing from your own pictures.
+- **Speech** with `generateSpeech`: text-to-speech models and their voices.
+- **Transcription** with `transcribe`: speech-to-text models, with timings when the model gives them.
+- **Video** with `experimental_generateVideo`: text to video, or video from a start image.
+
+Chat calls go to the gateway's OpenAI-compatible endpoint, `https://llm.wiro.ai/v1`. Image, speech, transcription and video calls go to the Wiro [Run API](https://wiro.ai/docs/run-a-model): the provider starts a task, waits for it and downloads the result. Every result tells you what the call cost, in `providerMetadata.wiro`, and calls are paid from your Wiro wallet.
 
 ## Install
 
@@ -24,7 +30,7 @@ npm install @wiro-ai/wiro-llm ai zod
 
 The package needs Node.js 22 or later, the same as AI SDK 7. `zod` is used for tool inputs and structured output.
 
-Create a project at [wiro.ai/panel/project/new](https://wiro.ai/panel/project/new) and put its credential in `WIRO_API_KEY`: the API key for an API Key Only project, or `API_KEY:API_SECRET` (both values joined with a colon) for a Signature project. Call the gateway from server code so the key never reaches a browser.
+Create a project at [wiro.ai/panel/project/new](https://wiro.ai/panel/project/new) and put its credential in `WIRO_API_KEY`: the API key for an API Key Only project, or `API_KEY:API_SECRET` (both values joined with a colon) for a Signature project. For a Signature project, image, speech, transcription and video calls sign every request with the secret, and the secret itself is never sent. Call Wiro from server code so the key never reaches a browser.
 
 ```bash
 export WIRO_API_KEY=your-api-key
@@ -60,8 +66,10 @@ const wiro = createWiro({
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| `apiKey` | `WIRO_API_KEY` | Your project credential, sent as `Authorization: Bearer <apiKey>`. Use `API_KEY:API_SECRET` for a Signature project. |
-| `baseURL` | `https://llm.wiro.ai/v1` | The gateway URL. |
+| `apiKey` | `WIRO_API_KEY` | Your project credential. Use `API_KEY:API_SECRET` for a Signature project. |
+| `baseURL` | `https://llm.wiro.ai/v1` | The LLM gateway URL, for chat models. |
+| `runBaseURL` | `https://api.wiro.ai/v1` | The Run API URL, for image, speech, transcription and video models. |
+| `poll` | see [Tasks](#tasks-costs-and-errors) | How image, speech and transcription calls wait for their task: `intervalMs` between checks and `timeoutMs` in all. |
 | `headers` | none | Extra headers to send with every request. |
 | `fetch` | `globalThis.fetch` | Your own fetch function, for example to log requests or in tests. |
 
@@ -163,9 +171,177 @@ const total = result.steps.reduce(
 );
 ```
 
+## Images
+
+```js
+import { writeFile } from 'node:fs/promises';
+import { wiro } from '@wiro-ai/wiro-llm';
+import { generateImage } from 'ai';
+
+const { image, providerMetadata } = await generateImage({
+  model: wiro.image('pruna/p-image'),
+  prompt: 'A red lighthouse on a rocky coast at dusk, warm light in the windows',
+  aspectRatio: '16:9',
+  seed: 42,
+});
+
+await writeFile(`lighthouse.${image.mediaType.split('/')[1]}`, image.uint8Array);
+console.log(providerMetadata.wiro.images[0]); // { taskId, cost, url, mediaType }
+```
+
+`wiro.image(modelId)` and `wiro.imageModel(modelId)` return the same image model. Models name their settings in different ways, such as `aspectRatio` or `ratio`, `samples` or `maxImages`, `width` and `height` or `resolution`. The provider reads each model's settings from Wiro once and sends `n`, `size`, `aspectRatio` and `seed` in the form that model takes: a size becomes a width and height, or an aspect ratio and the closest resolution, and an aspect ratio becomes a width and height on models that take those. A value the model does not offer comes back as a warning in `warnings`, and the model's default is used instead.
+
+With `n` above 1, a model with an image count setting makes all the images in one task, and other models get one task per image.
+
+### Image editing
+
+Pass your pictures in `prompt.images` to a model that takes input images, such as `google/nano-banana`, `openai/gpt-image-2` or `wiro/flux-2-dev`:
+
+```js
+import { readFile } from 'node:fs/promises';
+
+const { image } = await generateImage({
+  model: wiro.image('google/nano-banana'),
+  prompt: {
+    text: 'Turn this photo into a soft watercolor painting',
+    images: [await readFile('photo.jpg')],
+  },
+});
+```
+
+Images can be bytes, base64 text or URLs. Bytes are uploaded with the run, and URLs go to Wiro as they are, so they must be public. `prompt.mask` goes to models that take a mask, and a model without a prompt, such as `wiro/remove-background`, takes `prompt: { images: [...] }` alone.
+
+### Model settings
+
+Every model has settings of its own, listed on its page in the [model catalog](https://wiro.ai/models). Pass them in `providerOptions.wiro`; they go to the model as they are and win over the settings the provider fills in:
+
+```js
+await generateImage({
+  model: wiro.image('openai/gpt-image-2'),
+  prompt: 'A product photo of a ceramic mug on a linen tablecloth',
+  aspectRatio: '3:2',
+  providerOptions: { wiro: { quality: 'high', resolution: '2k' } },
+});
+```
+
+Required settings you leave out get the default the model shows in the catalog. [Model parameters](https://wiro.ai/docs/model-parameters) explains the setting types.
+
+## Speech
+
+```js
+import { writeFile } from 'node:fs/promises';
+import { wiro } from '@wiro-ai/wiro-llm';
+import { generateSpeech } from 'ai';
+
+const { audio, providerMetadata } = await generateSpeech({
+  model: wiro.speech('elevenlabs/eleven-v4-turbo'),
+  text: 'Hello from Wiro AI. This sentence was turned into speech.',
+  voice: 'alice',
+  language: 'en',
+  outputFormat: 'mp3',
+});
+
+await writeFile('hello.mp3', audio.uint8Array);
+console.log(providerMetadata.wiro); // { taskId, cost, elapsedSeconds, url, mediaType }
+```
+
+`voice` matches a model's voices by ID or by name, so `nova` picks `af_nova` on `wiro/kokoro-tts`. `language` takes ISO 639-1 codes such as `en` or `tr` and matches them to the model's own language list, whether it holds codes, names or letters. `outputFormat` picks the model's format of that kind (`mp3` gives `mp3_44100_128` on ElevenLabs models), and `instructions` and `speed` go to models that have them.
+
+## Transcription
+
+```js
+import { readFile } from 'node:fs/promises';
+import { wiro } from '@wiro-ai/wiro-llm';
+import { transcribe } from 'ai';
+
+const { text, segments, providerMetadata } = await transcribe({
+  model: wiro.transcription('openai/whisper-large-v3'),
+  audio: await readFile('meeting.mp3'),
+});
+
+console.log(text);
+console.log(segments); // [{ text, startSecond, endSecond }, ...]
+```
+
+Audio can be bytes, base64 text or a URL. A public URL goes straight to Wiro, which downloads it, so a long recording never passes through your server:
+
+```js
+await transcribe({
+  model: wiro.transcription('elevenlabs/speech-to-text'),
+  audio: new URL('https://example.com/interview.mp3'),
+});
+```
+
+`segments` holds the timings a model writes, and `timestampGranularities: ['segment']` turns them on for models with a timestamp setting, such as `nvidia/parakeet-tdt-0-6b-v3`. Language and speaker settings go in `providerOptions.wiro`, for example `{ language: 'English', numSpeakers: 2 }` on `openai/whisper-large-v3`.
+
+## Video
+
+```js
+import { writeFile } from 'node:fs/promises';
+import { wiro } from '@wiro-ai/wiro-llm';
+import { experimental_generateVideo as generateVideo } from 'ai';
+
+const { video, providerMetadata } = await generateVideo({
+  model: wiro.video('bytedance/seedance-v1-pro-fast'),
+  prompt: 'A paper boat drifting on a calm pond, soft morning light',
+  resolution: '864x480',
+  duration: 5,
+});
+
+await writeFile('boat.mp4', video.uint8Array);
+console.log(providerMetadata.wiro.videos[0]); // { taskId, cost, url, mediaType }
+```
+
+A start image goes in `prompt: { image, text }`, and `frameImages` with a `last_frame` sets the end frame on models that take one. `aspectRatio`, `resolution`, `duration`, `fps`, `seed` and `generateAudio` go to the model's matching settings: `1280x720` becomes `720p`, and a duration the model does not offer becomes the closest one it does, with a warning. `inputReferences` go to models that take reference images or videos.
+
+Video calls use the AI SDK's start and status flow. `poll` sets how often the SDK checks the task and how long it waits (every 5 seconds, up to 10 minutes, by default). With `webhook`, Wiro posts to your URL when the video is done, and the SDK waits for that instead of checking. To start a video in one process and collect it in another, use `experimental_startVideo` and `experimental_getVideoStatus`:
+
+```js
+import {
+  experimental_getVideoStatus as getVideoStatus,
+  experimental_startVideo as startVideo,
+} from 'ai';
+
+const model = wiro.video('klingai/kling-v2-5-turbo');
+const { operation } = await startVideo({ model, prompt: 'A fox walking through fresh snow' });
+// Store `operation` ({ taskId, taskToken }) and check it later:
+const status = await getVideoStatus(model, { operation });
+if (status.status === 'completed') console.log(status.videos[0].url);
+```
+
+## Tasks, costs and errors
+
+Image, speech, transcription and video calls run as Wiro tasks, and each result names its task and what it cost, in USD:
+
+| Call | Task and cost |
+| --- | --- |
+| `generateImage` | `providerMetadata.wiro.images[i]` has `taskId`, `cost` (the image's share of its task), `url` and `mediaType`. `calls[i].providerMetadata.wiro` has each task's `taskId`, `cost` and `elapsedSeconds`. |
+| `generateSpeech` | `providerMetadata.wiro` has `taskId`, `cost`, `elapsedSeconds`, `url` and `mediaType`. |
+| `transcribe` | `providerMetadata.wiro` has `taskId`, `cost` and `elapsedSeconds`. |
+| `experimental_generateVideo` | `providerMetadata.wiro.videos[i]` has `taskId`, `cost`, `url` and `mediaType`. |
+
+`url` is the file on Wiro's CDN, so you can hand a result to another model, such as an image to a video model, without uploading it again.
+
+The provider checks a task every 2 seconds at first, then less often, and waits up to 10 minutes. `createWiro({ poll: { intervalMs, timeoutMs } })` changes both for image, speech and transcription calls. `abortSignal` ends the wait.
+
+A task that ends without a result throws a `WiroTaskError` with the `taskId` and a `reason`: `failed`, `cancelled`, `timeout`, `no-output`, `status` or `download`. A run Wiro refuses, such as one without the prompt a model requires, throws an `APICallError` with Wiro's reason.
+
+```js
+import { WiroTaskError } from '@wiro-ai/wiro-llm';
+
+try {
+  await generateImage({ model: wiro.image('pruna/p-image'), prompt: 'A red lighthouse' });
+} catch (error) {
+  if (WiroTaskError.isInstance(error)) console.log(error.reason, error.taskId);
+  else throw error;
+}
+```
+
 ## Models
 
 Model IDs are lowercase `owner/model`, such as `openai/gpt-6-sol`, `claude/sonnet-5`, `google/gemini-3-pro`, `xai/grok-4-5`, `deepseek/v4-pro` or `qwen/qwen3-32b`. The `WiroChatModelId` type lists the models the gateway served when this version was published, so your editor can complete them, and any other ID works as well. Browse them in the [model catalog](https://wiro.ai/models?categories=llm-tool-call) or with `GET https://llm.wiro.ai/v1/models`, which also shows each model's tools, modalities and limits.
+
+Image, speech, transcription and video models use the IDs of the [model catalog](https://wiro.ai/models): browse [text to image](https://wiro.ai/models?categories=text-to-image), [image editing](https://wiro.ai/models?categories=image-to-image), [text to speech](https://wiro.ai/models?categories=text-to-speech), [speech to text](https://wiro.ai/models?categories=speech-to-text), [text to video](https://wiro.ai/models?categories=text-to-video) and [image to video](https://wiro.ai/models?categories=image-to-video). `WiroImageModelId`, `WiroSpeechModelId`, `WiroTranscriptionModelId` and `WiroVideoModelId` list the catalog's models for autocomplete, and new models work without an update.
 
 ## Responses and Messages routes
 
@@ -191,13 +367,18 @@ const viaMessages = anthropic('claude/sonnet-5');
 
 `@ai-sdk/anthropic` caps the output at 4,096 tokens for model IDs it does not know, so pass `maxOutputTokens` for longer answers.
 
-## Other SDKs and frameworks
+## Examples
 
-The gateway works with the SDKs you may already use. [`examples/`](./examples) has a short, runnable file for each:
+[`examples/`](./examples) has a short, runnable file for each part of this package, and for the other SDKs the gateway works with:
 
 | File | Shows |
 | --- | --- |
 | [`ai-sdk.mjs`](./examples/ai-sdk.mjs) | This package with `generateText` |
+| [`image.mjs`](./examples/image.mjs) | `generateImage` with an aspect ratio and a seed |
+| [`image-edit.mjs`](./examples/image-edit.mjs) | Image editing from a local picture |
+| [`speech.mjs`](./examples/speech.mjs) | `generateSpeech` with a voice and a language |
+| [`transcription.mjs`](./examples/transcription.mjs) | `transcribe` with timings |
+| [`video.mjs`](./examples/video.mjs) | `experimental_generateVideo` from text, or from a start image |
 | [`openai-sdk.mjs`](./examples/openai-sdk.mjs) | The OpenAI SDK for JavaScript |
 | [`openai_sdk.py`](./examples/openai_sdk.py) | The OpenAI SDK for Python |
 | [`anthropic-sdk.mjs`](./examples/anthropic-sdk.mjs) | The Anthropic SDK for JavaScript, on the Messages route |
@@ -211,7 +392,8 @@ Each file starts with the commands to install and run it. `npm install` in `exam
 
 - [Direct LLM Gateway](https://wiro.ai/docs/completions-api): routes, authentication, model discovery, usage and errors
 - [AI SDK setup](https://wiro.ai/docs/completions-api#llm-setup-ai-sdk): the same setup with `@ai-sdk/openai-compatible`
-- [AI SDK documentation](https://ai-sdk.dev/docs/introduction): `generateText`, `streamText`, tools and structured output
+- [Run a model](https://wiro.ai/docs/run-a-model) and [Tasks](https://wiro.ai/docs/tasks): the Run API behind image, speech, transcription and video calls
+- [AI SDK documentation](https://ai-sdk.dev/docs/introduction): `generateText` and `streamText`, plus [image generation](https://ai-sdk.dev/docs/ai-sdk-core/image-generation), [speech](https://ai-sdk.dev/docs/ai-sdk-core/speech), [transcription](https://ai-sdk.dev/docs/ai-sdk-core/transcription) and [video generation](https://ai-sdk.dev/docs/ai-sdk-core/video-generation)
 
 ## Agent skill
 
@@ -231,12 +413,15 @@ npm test
 npm run build
 ```
 
-The tests use a mocked `fetch` and make no network calls. `scripts/smoke.mjs` checks the built package against the live gateway with five small calls on `openai/gpt-5-4-nano`, billed to the project behind `WIRO_API_KEY`. It is not part of CI:
+The tests use a mocked `fetch` and make no network calls. Two scripts check the built package against the live API, billed to the project behind `WIRO_API_KEY`, and are not part of CI. `scripts/smoke.mjs` makes five small chat calls on `openai/gpt-5-4-nano`, and `scripts/smoke-media.mjs` runs one image, one speech, one transcription and one video task on low-cost models:
 
 ```bash
 npm run build
 WIRO_API_KEY=your-api-key npm run smoke
+WIRO_API_KEY=your-api-key npm run smoke:media
 ```
+
+`node scripts/update-media-model-ids.mjs` refreshes the image, speech, transcription and video model ID lists from the public catalog.
 
 ## Support, terms and privacy
 
