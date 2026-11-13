@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1
+
+README only: the More from Wiro AI table lists the current Wiro AI repositories. The provider is the same as in 0.2.0.
+
 ## 0.2.0
 
 The provider now covers Wiro's image, speech, transcription and video models as well as chat.
