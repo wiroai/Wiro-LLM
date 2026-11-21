@@ -200,7 +200,13 @@ curl -s "https://llm.wiro.ai/v1/generation?id=RESPONSE_ID" \
 
 - Chat Completions, Responses, models and generation errors look like `{"error": {"message", "type", "param", "code"}}`: decide on `error.code`. Messages errors look like `{"type": "error", "error": {"type", "message"}}`: decide on `error.type`. Once a stream has started, errors arrive as events: an error `data:` frame then `[DONE]` on Chat Completions, `response.failed` on Responses, `error` on Messages.
 - `unsupported_capability`: the model does not declare something the request asked for, such as a structured output mode. It is refused before anything is billed; pick another model or change the request.
-- `model_not_found` or `invalid_model`: check the id with `GET /v1/models`. HTTP 403 `permission_denied`: the team's Model Access settings do not allow this model.
+- `model_not_found` or `invalid_model`: check the id with `GET /v1/models`.
+- HTTP 403 `model_not_allowed`: a Model Access rule of the account or the team blocks this model, and the message names the rule. Nothing ran and nothing was billed. Do not retry, and do not switch to another model on your own: tell the user which rule blocked it. The account owner, a team admin or the organization owner can change the rule at https://wiro.ai/panel/controls/model-access, or the user can pick another model.
+- HTTP 402 `spend_limit_reached`: a spend limit of the account or the team is reached, and the message names the limit and when it resets. Nothing ran and nothing was billed. It is not the balance, so adding funds does not help. Do not retry: the call stays refused until the limit resets or the account owner, a team admin or the organization owner raises it at https://wiro.ai/panel/controls/spend-limits. If the message says runs in progress hold part of it, that part frees up when they end; try again then only with the user's yes.
+- HTTP 402 `insufficient_quota`: the wallet balance is too low. The user adds funds at https://wiro.ai/panel/wallet/deposit/credit-card.
+- HTTP 403 `permission_denied`: Wiro does not let this project make the call, such as a model that only a signed-in account can run. It is not a Model Access rule.
+- Messages errors carry no `code`. A 403 `permission_error` whose message names a Model Access rule is `model_not_allowed`, and a 402 `billing_error` whose message names a spend limit is `spend_limit_reached`.
+- With the AI SDK these arrive as an `APICallError`: a chat call has the code in `error.data.error.code`. A media model that Wiro refuses keeps Wiro's answer in `error.data.errors`, where code 92 is a Model Access rule and code 93 a spend limit, handled the same way.
 - HTTP 429: wait the seconds in `retry-after`, then retry. HTTP 503 and 529 can be retried. Every reply carries `ratelimit-remaining`, `ratelimit-reset` and `request-id` headers.
 
 ## Links
