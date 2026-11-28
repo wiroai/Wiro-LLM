@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2
+
+The model ID types for autocomplete (`WiroImageModelId`, `WiroSpeechModelId`, `WiroTranscriptionModelId` and `WiroVideoModelId`) list today's catalog: 12 models were added, among them `bytedance/seedream-5-5`, `klingai/kling-image-v4`, `bytedance/seedance-v2-5-flash` and `lightx2v/minimax-h3-turbo`, and `bytedance/seedance-pro-v1-5`, which left the catalog, was removed. Any other model ID still works as a string. `scripts/update-media-model-ids.mjs` leaves out live-session models by Wiro's renamed price method, `per-realtime-turn`. The provider is the same as in 0.2.1.
+
 ## 0.2.1
 
 README only: the More from Wiro AI table lists the current Wiro AI repositories. The provider is the same as in 0.2.0.

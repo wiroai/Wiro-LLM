@@ -39,7 +39,7 @@ function listed(model) {
   if (categories.some((category) => category.includes('realtime')) || slug.includes('realtime')) {
     return false;
   }
-  return !JSON.stringify(model.dynamicprice ?? '').includes('cp-realtimeturn');
+  return !JSON.stringify(model.dynamicprice ?? '').includes('per-realtime-turn');
 }
 
 async function modelsIn(category) {
